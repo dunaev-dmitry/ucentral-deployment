@@ -16,6 +16,7 @@ In this documentation we will go through general deployment process leaving Helm
 
 Following list of instruments should be installed on your machine in order to run Helm deployment \(we are considering you already have Kubernetes cluster and configured connection to it with Kubectl\):
 
+* [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Helm](https://helm.sh/docs/intro/install/)
 * [Helm-git](https://github.com/aslafy-z/helm-git)
 
@@ -28,11 +29,11 @@ chmod 700 get_helm.sh
 helm plugin install https://github.com/aslafy-z/helm-git
 ```
 
-Also in order for you application to work correctly, you need to have support for LoadBalancer service type as microservices must have static IP addesses that your Access Points could connect to. For development clusters [MetalLB](https://metallb.universe.tf/) may be used.
+Also in order for you application to work correctly, you need to have support for LoadBalancer service type as microservices must have static IP addesses that your Access Points can connect to. For development clusters [MetalLB](https://metallb.universe.tf/) may be used.
 
 ### Deploy TIP Controller
 
-TIP Controller services use SSL certificates to ensure inter-service and Access Point connectivity security. These certificates may be generated, but as en entrypoint you may use TIP issued certificates from DigiCert.
+TIP Controller services use SSL certificates to ensure inter-service and Access Point connectivity security. These certificates may be generated, but as an entrypoint you may use TIP issued certificates from DigiCert.
 
 First we need to clone deployment Git repository and get into chart directory:
 
@@ -41,13 +42,15 @@ git clone https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy.git
 cd wlan-cloud-ucentral-deploy/chart
 ```
 
+This will get you the current development state. If you are looking for a specific release, you need to switch to it using `git checkout $VERSION`. All available releases can be listed using the `git tag` command.  
+
 Next, we need to get all required chart dependencies \(once again, helm-git is required for this\):
 
 ```text
 helm dependency update
 ```
 
-Now he have almost everything ready for your deployment, since we already have all required TLS certificats in the [same repository that you may use](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/tree/main/docker-compose/certs):
+Now he have almost everything ready for your deployment, since we already have all required TLS certificates in the [same repository that you may use](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/tree/main/docker-compose/certs):
 
 ```text
 helm upgrade --install --create-namespace --wait \
@@ -62,6 +65,8 @@ helm upgrade --install --create-namespace --wait \
     -n tip \
     tip-ucentral .
 ```
+
+This will deploy the uCentral Helm chart with its default configuration. The only required configuration is passing along the TLS certificates that will be used for various SSL endpoints. Further parameters can be found in the `values.yaml` file in the [parent](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/blob/main/chart/values.yaml) and in each of the subcharts \([ucentralgw](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw/blob/master/helm/values.yaml), [ucentralsec](https://github.com/Telecominfraproject/wlan-cloud-ucentralsec/blob/main/helm/values.yaml), [rtty](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw-rtty/blob/main/chart/values.yaml), [ui](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw-ui/blob/main/helm/values.yaml)\). 
 
 After deployment finished successfully you can check if everything works correctly by running `kubectl get pods -n tip`:
 
