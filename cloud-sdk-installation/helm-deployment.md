@@ -35,35 +35,26 @@ Also in order for you application to work correctly, you need to have support fo
 
 TIP Controller services use SSL certificates to ensure inter-service and Access Point connectivity security. These certificates may be generated, but as an entrypoint you may use TIP issued certificates from DigiCert.
 
-First we need to clone deployment Git repository and get into chart directory:
+For the deployment we will use prebundled chart with all required dependencies. To do that, you need to add public Helm repo first:
 
 ```text
-git clone https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy.git
-cd wlan-cloud-ucentral-deploy/chart
+helm repo add tip-wlan-cloud-ucentral-helm https://tip.jfrog.io/artifactory/tip-wlan-cloud-ucentral-helm/
 ```
 
-This will get you the current development state. If you are looking for a specific release, you need to switch to it using `git checkout $VERSION`. All available releases can be listed using the `git tag` command.  
-
-Next, we need to get all required chart dependencies \(once again, helm-git is required for this\):
-
-```text
-helm dependency update
-```
-
-Now he have almost everything ready for your deployment, since we already have all required TLS certificates in the [same repository that you may use](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/tree/main/docker-compose/certs):
+Now he have almost everything ready for your deployment, since we already have all required TLS certificates in the same repository [that you may use](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/tree/main/docker-compose/certs) or use your own:
 
 ```text
 helm upgrade --install --create-namespace --wait \
-    --set-file ucentralgw.certs."restapi-cert\.pem"=../docker-compose/certs/restapi-cert.pem \
-    --set-file ucentralgw.certs."restapi-key\.pem"=../docker-compose/certs/restapi-key.pem \
-    --set-file ucentralgw.certs."websocket-cert\.pem"=../docker-compose/certs/websocket-cert.pem \
-    --set-file ucentralgw.certs."websocket-key\.pem"=../docker-compose/certs/websocket-key.pem \
-    --set-file rttys.certs."restapi-cert\.pem"=../docker-compose/certs/restapi-cert.pem \
-    --set-file rttys.certs."restapi-key\.pem"=../docker-compose/certs/restapi-key.pem \
-    --set-file ucentralsec.certs."restapi-cert\.pem"=../docker-compose/certs/restapi-cert.pem \
-    --set-file ucentralsec.certs."restapi-key\.pem"=../docker-compose/certs/restapi-key.pem \
+    --set-file ucentralgw.certs."restapi-cert\.pem"=restapi-cert.pem \
+    --set-file ucentralgw.certs."restapi-key\.pem"=restapi-key.pem \
+    --set-file ucentralgw.certs."websocket-cert\.pem"=websocket-cert.pem \
+    --set-file ucentralgw.certs."websocket-key\.pem"=websocket-key.pem \
+    --set-file rttys.certs."restapi-cert\.pem"=restapi-cert.pem \
+    --set-file rttys.certs."restapi-key\.pem"=restapi-key.pem \
+    --set-file ucentralsec.certs."restapi-cert\.pem"=restapi-cert.pem \
+    --set-file ucentralsec.certs."restapi-key\.pem"=restapi-key.pem \
     -n tip \
-    tip-ucentral .
+    tip-ucentral tip-wlan-cloud-ucentral-helm/wlan-cloud-ucentral
 ```
 
 This will deploy the uCentral Helm chart with its default configuration. The only required configuration is passing along the TLS certificates that will be used for various SSL endpoints. Further parameters can be found in the `values.yaml` file in the [parent](https://github.com/Telecominfraproject/wlan-cloud-ucentral-deploy/blob/main/chart/values.yaml) and in each of the subcharts \([ucentralgw](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw/blob/master/helm/values.yaml), [ucentralsec](https://github.com/Telecominfraproject/wlan-cloud-ucentralsec/blob/main/helm/values.yaml), [rtty](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw-rtty/blob/main/chart/values.yaml), [ui](https://github.com/Telecominfraproject/wlan-cloud-ucentralgw-ui/blob/main/helm/values.yaml)\). 
@@ -72,13 +63,12 @@ After deployment finished successfully you can check if everything works correct
 
 ```text
 NAME                                        READY   STATUS    RESTARTS   AGE
-kafka-0                                     1/1     Running   0          15h
-tip-ucentral-mysql-0                        1/1     Running   0          15h
-tip-ucentral-rttys-878df95d4-gn99x          1/1     Running   0          4d
-tip-ucentral-ucentralgwui-fcbbbf84b-g7bcl   1/1     Running   0          4d
-tip-ucentral-zookeeper-0                    1/1     Running   0          15h
-ucentralgw-6c955546c6-w2mw4                 1/1     Running   0          15h
-ucentralsec-74f447758d-ssdn5                1/1     Running   0          3d5h
+kafka-0                                     1/1     Running   0          15m
+rttys-878df95d4-gn99x                       1/1     Running   0          15m
+ucentralgw-6c955546c6-w2mw4                 1/1     Running   0          15m
+ucentralgwui-fcbbbf84b-g7bcl                1/1     Running   0          15m
+ucentralsec-74f447758d-ssdn5                1/1     Running   0          15m
+zookeeper-0                                 1/1     Running   0          15m
 ```
 
 After this you may access Web UI in your browser with default credentials:
